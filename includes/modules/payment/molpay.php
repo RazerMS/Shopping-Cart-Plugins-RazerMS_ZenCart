@@ -237,7 +237,7 @@ class molpay {
         $vcode = md5($OrderAmt.MODULE_PAYMENT_MOLPAY_ID.$oid.MODULE_PAYMENT_MOLPAY_VKEY);
 
         $process_button_string = 
-        zen_draw_hidden_field('currency', strtolower($currency)) . 
+        zen_draw_hidden_field('currency', strtoupper($currency)) . 
         zen_draw_hidden_field('bill_desc', $pname) .
         zen_draw_hidden_field('orderid', $oid) .
         zen_draw_hidden_field('returnurl', $returnurl).
