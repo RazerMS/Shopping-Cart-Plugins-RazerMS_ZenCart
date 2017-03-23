@@ -59,39 +59,42 @@ curl_setopt($ch, CURLOPT_SSL_VERIFYPEER , FALSE);
 $result = curl_exec( $ch );
 curl_close( $ch );
 
+$cash_chn = array("cash" , "Cash-711", "epay", "Cash-MBBCDM", "Cash-POS", "singpost", "ATMVA", "dragonpay", "TH123", "TH_CASH");
+
 if($skey==$key1)
 {
-	if ($status=="00") 
-	{
-		$db->Execute("update " . TABLE_ORDERS . "
-							set orders_status = 2
-	                        where orders_id = '" . (int)$orderid . "'");
+        if ($status=="00")
+        {
+                $db->Execute("update " . TABLE_ORDERS . "
+                                                        set orders_status = 2
+                                where orders_id = '" . (int)$orderid . "'");
 
-		$db->Execute("delete from ". TABLE_CUSTOMERS_BASKET);
-		unset($_SESSION['cart']);
+                $db->Execute("delete from ". TABLE_CUSTOMERS_BASKET);
+                unset($_SESSION['cart']);
+
+                header('Location: /index.php?main_page=checkout_success');
+        }
+        elseif($status=="22" && in_array($channel, $cash_chn) ){
+                $db->Execute("update " . TABLE_ORDERS . "
+                                                                set orders_status = 1
+                                        where orders_id = '" . (int)$orderid . "'");
+
+                $db->Execute("delete from ". TABLE_CUSTOMERS_BASKET);
+                unset($_SESSION['cart']);
 		
-		header('Location: /index.php?main_page=checkout_success');
-	}
-	else
-	{
-		if($status=="11")
-		{
-			$db->Execute("update " . TABLE_ORDERS . "
-								set orders_status = 1
-		                        where orders_id = '" . (int)$orderid . "'");
-		}
-		elseif($status=="22")
-		{
-			$db->Execute("update " . TABLE_ORDERS . "
-								set orders_status = 1
-		                        where orders_id = '" . (int)$orderid . "'");
-		}
+		header('Location: /index.php?main_page=checkout_success'); 
+        }
+        else
+        {
+                        $db->Execute("update " . TABLE_ORDERS . "
+                                                                set orders_status = 1
+                                        where orders_id = '" . (int)$orderid . "'");
 
-		// Otherwise will go to checkout payment page.
-		$nb_error = "Unsuccessfull Online Payment. Please make payment again. ";
-		$messageStack->add_session('checkout_payment', $nb_error, 'error');
-		zen_redirect(zen_href_link(FILENAME_CHECKOUT_PAYMENT, '', $ssl, true, false));
-	}
+                // Otherwise will go to checkout payment page.
+                $nb_error = "Unsuccessful Online Payment. Please make payment again. ";
+                $messageStack->add_session('checkout_payment', $nb_error, 'error');
+                zen_redirect(zen_href_link(FILENAME_CHECKOUT_PAYMENT, '', $ssl, true, false));
+        }
 }
 
 exit();
