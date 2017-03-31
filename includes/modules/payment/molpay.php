@@ -201,14 +201,27 @@ class molpay {
 
         foreach($order->products as $product)
         {
-            $thisProduct=$db->Execute("select products_id from " . TABLE_PRODUCTS_DESCRIPTION . "
-                                where products_name = '" . $product['name'] . "'");
-
-            $productId=$thisProduct->fields['products_id'];
-
-            $db->Execute("update " . TABLE_PRODUCTS . "
+            $sql_data_array = array(
+					       'orders_id'=> $insert_id,
+					       'products_id'=> $product['id'],
+					       'products_model'=> $product['model'],
+					       'products_name'=> $product['name'],
+					       'products_price'=> $product['price'],
+					       'final_price'=> $product['final_price'],
+					       'products_tax'=> $product['tax'],
+					       'products_quantity'=> $product['qty'],
+					       'onetime_charges'=> $product['onetime_charges'],
+					       'products_priced_by_attribute'=> $product['products_priced_by_attribute'],
+				       	'product_is_free'=> $product['product_is_free'],
+				       	'products_discount_type'=> $product['products_discount_type'],
+					       'products_discount_type_from'=> $product['products_discount_type_from'],
+					       'products_prid' => '');
+                //echo "<pre>".print_r($sql_data_array, 1)."</pre>";exit();
+	          	zen_db_perform(TABLE_ORDERS_PRODUCTS, $sql_data_array);
+           
+		         $db->Execute("update " . TABLE_PRODUCTS . "
                                 set products_quantity = products_quantity - '". $product['qty'] ."'
-                                where products_id = '" . $productId . "'");
+                                where products_id = '" . $product['id']. "'");
         }
        
         return false;
@@ -242,7 +255,8 @@ class molpay {
         zen_draw_hidden_field('orderid', $oid) .
         zen_draw_hidden_field('returnurl', $returnurl).
         zen_draw_hidden_field('vcode', $vcode).
-        zen_draw_hidden_field('amount', $OrderAmt) ;
+        zen_draw_hidden_field('amount', $OrderAmt).
+        zen_draw_hidden_field('bill_desc', 'Payment to '.STORE_NAME) ;
 
         $language_code_raw = "select code from " . TABLE_LANGUAGES . " where languages_id ='$languages_id'";
         $language_code = $db->Execute($language_code_raw);
