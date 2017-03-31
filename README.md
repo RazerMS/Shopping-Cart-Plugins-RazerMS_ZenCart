@@ -8,6 +8,8 @@ Supported version
 -----------------
 
 ZenCart version 1.3.x
+ZenCart version 1.4.x
+ZenCart version 1.5.x
 
 
 Notes
@@ -37,7 +39,7 @@ Please ensure the file permission is correct. It's recommended to CHMOD to 644
     3.MOLPay Multi Return URL : Define return url for this module to update order after payment has been made.
      Otherwise you may need to define on your MOLPay merchant profile.
     4.Sort order of display : set to 0
-    5.Set Order Status : set to Processing [2]
+    5.Set Order Status : set to Pending [1]
 
 - Click on `[Update]` button to save your setting.
 
