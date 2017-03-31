@@ -7,9 +7,9 @@ MOLPay Plugin for ZenCart Shopping Cart developed by MOLPay R&D team.
 Supported version
 -----------------
 
-ZenCart version 1.3.x
-ZenCart version 1.4.x
-ZenCart version 1.5.x
+ZenCart version 1.3.x<br>
+ZenCart version 1.4.x<br>
+ZenCart version 1.5.x<br>
 
 
 Notes
