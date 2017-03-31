@@ -13,7 +13,7 @@ global $db, $order;
 
 $info = ( $HTTP_POST_VARS )?$HTTP_POST_VARS:$_POST;
 
-$domain	  = MODULE_PAYMENT_MOLPAY_ID;
+$domain	  = $info['domain'];
 $amount   = $info['amount'];
 $orderid  = $info['orderid'];
 $tranID   = $info['tranID'];
@@ -24,6 +24,23 @@ $paydate  = $info['paydate'];
 $channel  = $info['channel'];
 $skey     = $info['skey'];
 $password = MODULE_PAYMENT_MOLPAY_VKEY;
+
+$excluded = ['domain', 'skey', 'nbcb', 'treq', 'extraP'];
+$comment = "Payment Info\n\r";
+
+foreach($info as $k => $v){
+    if(!in_array($k, $excluded))
+        $comment .= $k." :".$v.", ";
+}
+
+if($status == "11")
+  $sr = "Failed";
+elseif($status == "22")
+  $sr = "Pending";
+elseif($status == "00")
+  $sr = "Success";
+
+$comment .= "Status Remark :".$sr;
 
 $key0 = md5($tranID.$orderid.$status.$domain.$amount.$currency);
 $key1 = md5($paydate.$domain.$key0.$appcode.$password);
@@ -59,43 +76,57 @@ curl_setopt($ch, CURLOPT_SSL_VERIFYPEER , FALSE);
 $result = curl_exec( $ch );
 curl_close( $ch );
 
-$cash_chn = array("cash" , "Cash-711", "epay", "Cash-MBBCDM", "Cash-POS", "singpost", "ATMVA", "dragonpay", "TH123", "TH_CASH");
-
-if($skey==$key1)
+if($skey != $key1)
 {
-        if ($status=="00")
-        {
-                $db->Execute("update " . TABLE_ORDERS . "
-                                                        set orders_status = 2
-                                where orders_id = '" . (int)$orderid . "'");
+        $nb_error = "Payment failed. Please make payment again. ";
+        $messageStack->add_session('checkout_payment', $nb_error, 'error');
 
-                $db->Execute("delete from ". TABLE_CUSTOMERS_BASKET);
-                unset($_SESSION['cart']);
-
-                header('Location: /index.php?main_page=checkout_success');
-        }
-        elseif($status=="22" && in_array($channel, $cash_chn) ){
-                $db->Execute("update " . TABLE_ORDERS . "
-                                                                set orders_status = 1
-                                        where orders_id = '" . (int)$orderid . "'");
-
-                $db->Execute("delete from ". TABLE_CUSTOMERS_BASKET);
-                unset($_SESSION['cart']);
-		
-		header('Location: /index.php?main_page=checkout_success'); 
-        }
-        else
-        {
-                        $db->Execute("update " . TABLE_ORDERS . "
-                                                                set orders_status = 1
-                                        where orders_id = '" . (int)$orderid . "'");
-
-                // Otherwise will go to checkout payment page.
-                $nb_error = "Unsuccessful Online Payment. Please make payment again. ";
-                $messageStack->add_session('checkout_payment', $nb_error, 'error');
-                zen_redirect(zen_href_link(FILENAME_CHECKOUT_PAYMENT, '', $ssl, true, false));
-        }
+        zen_redirect(zen_href_link(FILENAME_CHECKOUT_PAYMENT, '', $ssl, true, false));
+        exit();
 }
+
+if ($status=="00") 
+{
+	$db->Execute("update " . TABLE_ORDERS . "
+			      set orders_status = 2
+	                      where orders_id = '" . (int)$orderid . "'");
+	                        
+        $sql_data_array = array('orders_id' => (int)$orderid,
+                            		'orders_status_id' => 2,
+		                        'date_added' => 'now()',
+                            		'customer_notified' => false,
+                            		'comments'=>$comment
+        );
+
+        zen_db_perform(TABLE_ORDERS_STATUS_HISTORY, $sql_data_array);
+
+	$db->Execute("delete from ". TABLE_CUSTOMERS_BASKET);
+	unset($_SESSION['cart']);
+		
+	zen_redirect(zen_href_link(FILENAME_CHECKOUT_SUCCESS, '', $ssl, true, false));
+}
+elseif($status=="22")
+{
+        $db->Execute("update " . TABLE_ORDERS_STATUS_HISTORY . " set comments = '". $comment ."' where orders_id = '" . (int)$orderid . "'");
+								
+	$db->Execute("delete from ". TABLE_CUSTOMERS_BASKET);
+	unset($_SESSION['cart']);
+	
+	$nb_error = "Cash payment request successfully created. Please make payment within the given period else your order will not be process.";                
+	$messageStack->add_session('checkout_cash', $nb_error, 'success');
+	zen_redirect(zen_href_link(FILENAME_CHECKOUT_SUCCESS, '', $ssl, true, false));
+}
+elseif($status=="11")
+{
+        $db->Execute("update " . TABLE_ORDERS_STATUS_HISTORY . " set comments = '". $comment ."' where orders_id = '" . (int)$orderid . "'");
+                                      
+	$nb_error = "Payment failed. Please make payment again. ";
+	$messageStack->add_session('checkout_payment', $nb_error, 'error');
+		
+	zen_redirect(zen_href_link(FILENAME_CHECKOUT_PAYMENT, '', $ssl, true, false));
+}
+
 
 exit();
 ?>
+
