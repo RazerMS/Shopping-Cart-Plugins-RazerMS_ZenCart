@@ -73,7 +73,9 @@ class molpay {
         global $order;
 
         return array('id' => $this->code,
-                'module' => 'MOLPay Online Payment Gateway(Visa, MasterCard, Maybank2u, MEPS, FPX, etc)'
+                 'module' => MODULE_PAYMENT_MOLPAY_TEXT_CATALOG_LOGO,
+                 'icon' => MODULE_PAYMENT_MOLPAY_TEXT_CATALOG_LOGO
+                 );
         );
     }
 
@@ -99,9 +101,8 @@ class molpay {
         $customer_info->fields['country_name'] = zen_get_country_name($customer_info->fields['entry_country_id']);
         
         $curr_obj = $order->info;
-        $currency = $curr_obj[currency];
 
-        $OrderAmt = number_format($order->info['total'] * $currencies->get_value($currency), $currencies->get_decimal_places($currency), '.', '') ; 
+        $OrderAmt = number_format($order->info['total'] * $order->info['currency_value'], $currencies->get_decimal_places($order->info['currency']), '.', '') ; 
 
         $order_query = array('customers_id' => $customer_id,
                'customers_name' => $customer_info->fields['customers_firstname'] . " " . $customer_info->fields['customers_lastname'],
@@ -133,22 +134,24 @@ class molpay {
                'billing_state' => $customer_info->fields['entry_state'],
                'billing_country' => $customer_info->fields['country_name'],
                'billing_address_format_id' => $customer_info->fields['format_id'],
+               'shipping_method' => $order->info['shipping_method'],
+               'shipping_module_code' => $order->info['shipping_module_code'],
                'payment_method' => 'MOLPay Online Payment Gateway(Visa, MasterCard, Maybank2u, MEPS, FPX, etc)',
                'payment_module_code' => 'molpay',
-               'coupon_code' => ' ',
+               'coupon_code' => $order->info['coupon_code'],
                'date_purchased' => 'now()', 
                'orders_status' => DEFAULT_ORDERS_STATUS_ID,
-               'currency' => DEFAULT_CURRENCY,
-               'currency_value' => $currency,
+               'currency' => $order->info['currency'],
+               'currency_value' =>  $order->info['currency_value'],
                'order_total' => $OrderAmt,
-                'order_tax' => '0.00',
-                'paypal_ipn_id' => '0',
+               'order_tax' => '0.00',
+               'paypal_ipn_id' => '0',
                'ip_address' => $_SERVER['REMOTE_ADDR']. " - " . $_SERVER['REMOTE_ADDR']
                );
-        //print_r($order_query);
+
         zen_db_perform(TABLE_ORDERS, $order_query);
         $insert_id = $db->insert_ID();
-
+        
         //Insert Order status History
         $order_status = array('orders_id' => $insert_id,
                           'orders_status_id' => DEFAULT_ORDERS_STATUS_ID,
@@ -171,8 +174,8 @@ class molpay {
 
         $order_total = array('orders_id' => $insert_id,
                             'title' => '',
-                            'text' => "0.00",
-                            'value' => "0.00", 
+                            'text' => $order->info['shipping_cost'],
+                            'value' => $order->info['shipping_cost'], 
                             'class' => "ot_shipping", 
                             'sort_order' => "2");
         //echo '<br/>';
@@ -181,7 +184,7 @@ class molpay {
 
         $order_total = array('orders_id' => $insert_id,
                             'title' => 'Total',
-                            'text' => $OrderAmt,
+                            'text' => $order->info['currency']." ".$OrderAmt,
                             'value' => $OrderAmt, 
                             'class' => "ot_total", 
                             'sort_order' => "3");
