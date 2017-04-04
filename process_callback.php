@@ -25,7 +25,7 @@ $channel  = $info['channel'];
 $skey     = $info['skey'];
 $password = MODULE_PAYMENT_MOLPAY_VKEY;
 
-$excluded = ['domain', 'skey', 'nbcb', 'treq', 'extraP'];
+$excluded = array ("domain", "skey", "nbcb", "treq", "extraP");
 $comment = "Payment Info\n\r";
 
 foreach($info as $k => $v){
@@ -66,11 +66,17 @@ if ($status=="00")
 }
 elseif($status=="11")
 {
+                $db->Execute("update " . TABLE_ORDERS . "
+				set orders_status = 1 where orders_id = '" . (int)$orderid . "'");
+    
                 $db->Execute("update " . TABLE_ORDERS_STATUS_HISTORY . "
                               set comments ='" .$comment."' where orders_id = '" . (int)$orderid . "'");
 }
 elseif($status=="22")
 {
+                $db->Execute("update " . TABLE_ORDERS . "
+				set orders_status = 1 where orders_id = '" . (int)$orderid . "'");
+    
                 $db->Execute("update " . TABLE_ORDERS_STATUS_HISTORY . "
                               set comments ='" .$comment."' where orders_id = '" . (int)$orderid . "'");
 }
