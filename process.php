@@ -25,7 +25,7 @@ $channel  = $info['channel'];
 $skey     = $info['skey'];
 $password = MODULE_PAYMENT_MOLPAY_VKEY;
 
-$excluded = ['domain', 'skey', 'nbcb', 'treq', 'extraP'];
+$excluded = array ("domain", "skey", "nbcb", "treq");
 $comment = "Payment Info\n\r";
 
 foreach($info as $k => $v){
