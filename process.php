@@ -64,7 +64,7 @@ while ( list($k,$v) = each($_POST) )
 	$postData[]= $k."=".$v;
 }
 $postdata 	=implode("&",$postData);
-$url 		="https://www.onlinepayment.com.my/MOLPay/API/chkstat/returnipn.php";
+$url 		=((MODULE_PAYMENT_MOLPAY_TYPE == 'live') ? "https://www.onlinepayment.com.my/MOLPay/API/chkstat/returnipn.php" : "https://sandbox.molpay.com/MOLPay/API/chkstat/returnipn.php");
 $ch 		=curl_init();
 curl_setopt($ch, CURLOPT_POST , 1 );
 curl_setopt($ch, CURLOPT_POSTFIELDS , $postdata );
