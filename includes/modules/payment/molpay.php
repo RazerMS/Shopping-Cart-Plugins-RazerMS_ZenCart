@@ -20,7 +20,7 @@ class molpay {
         $this->description = MODULE_PAYMENT_MOLPAY_TEXT_DESCRIPTION;
         $thiglobals->sort_order = MODULE_PAYMENT_MOLPAY_SORT_ORDER;
         $this->enabled = ((MODULE_PAYMENT_MOLPAY_STATUS == 'True') ? true : false);
-        $this->form_action_url = "https://www.onlinepayment.com.my/MOLPay/pay/".MODULE_PAYMENT_MOLPAY_ID."/";
+        $this->form_action_url = ((MODULE_PAYMENT_MOLPAY_TYPE == 'live') ? "https://www.onlinepayment.com.my/MOLPay/pay/".MODULE_PAYMENT_MOLPAY_ID."/" : "https://sandbox.molpay.com/MOLPay/pay/".MODULE_PAYMENT_MOLPAY_ID."/");
 
         if ((int)MODULE_PAYMENT_MOLPAY_ORDER_STATUS_ID > 0) {
             $this->order_status = MODULE_PAYMENT_MOLPAY_ORDER_STATUS_ID;
@@ -71,12 +71,12 @@ class molpay {
      */
     function selection() {
         global $order;
-
-        return array('id' => $this->code,
+        
+         return array('id' => $this->code,
                  'module' => MODULE_PAYMENT_MOLPAY_TEXT_CATALOG_LOGO,
                  'icon' => MODULE_PAYMENT_MOLPAY_TEXT_CATALOG_LOGO
                  );
-        );
+
     }
 
     function pre_confirmation_check() {
@@ -101,6 +101,9 @@ class molpay {
         $customer_info->fields['country_name'] = zen_get_country_name($customer_info->fields['entry_country_id']);
         
         $curr_obj = $order->info;
+       // echo "<pre>".print_r($curr_obj,1)."</pre>"; exit();
+        //$currency = $curr_obj[currency];
+//        echo "<pre>".print_r($currencies,1)."</pre><br>"; exit();
 
         $OrderAmt = number_format($order->info['total'] * $order->info['currency_value'], $currencies->get_decimal_places($order->info['currency']), '.', '') ; 
 
@@ -148,7 +151,9 @@ class molpay {
                'paypal_ipn_id' => '0',
                'ip_address' => $_SERVER['REMOTE_ADDR']. " - " . $_SERVER['REMOTE_ADDR']
                );
-
+              //   echo "<pre>".print_r($order,1)."</pre><br>".$order->info['sub_total']."<br>";
+              //  echo "<pre>".print_r($order_query,1)."</pre>"; exit();
+        //print_r($order_query);
         zen_db_perform(TABLE_ORDERS, $order_query);
         $insert_id = $db->insert_ID();
         
@@ -164,8 +169,8 @@ class molpay {
         //Insert Order Total
         $order_total = array('orders_id' => $insert_id,
                             'title' => 'Sub-Total',
-                            'text' => $OrderAmt,
-                            'value' => $OrderAmt, 
+                            'text' => $order->info['currency']." ".$order->info['subtotal'],
+                            'value' => $order->info['subtotal'], 
                             'class' => "ot_subtotal", 
                             'sort_order' => "1");
         //echo '<br/>';
@@ -173,8 +178,8 @@ class molpay {
         zen_db_perform(TABLE_ORDERS_TOTAL, $order_total);
 
         $order_total = array('orders_id' => $insert_id,
-                            'title' => '',
-                            'text' => $order->info['shipping_cost'],
+                            'title' => $order->info['shipping_method'],
+                            'text' => $order->info['currency']." ".$order->info['shipping_cost'],
                             'value' => $order->info['shipping_cost'], 
                             'class' => "ot_shipping", 
                             'sort_order' => "2");
@@ -201,28 +206,29 @@ class molpay {
                                'text' => $customers_query->fields['customers_fullname'].' ('.$customers_query->fields['customers_email_address'].')');
             $customers_query->MoveNext();
         }
-
+	
+	//echo "<pre>".print_r($order->products, 1)."</pre>";exit();
         foreach($order->products as $product)
         {
-            $sql_data_array = array(
-					       'orders_id'=> $insert_id,
-					       'products_id'=> $product['id'],
-					       'products_model'=> $product['model'],
-					       'products_name'=> $product['name'],
-					       'products_price'=> $product['price'],
-					       'final_price'=> $product['final_price'],
-					       'products_tax'=> $product['tax'],
-					       'products_quantity'=> $product['qty'],
-					       'onetime_charges'=> $product['onetime_charges'],
-					       'products_priced_by_attribute'=> $product['products_priced_by_attribute'],
-				       	'product_is_free'=> $product['product_is_free'],
-				       	'products_discount_type'=> $product['products_discount_type'],
-					       'products_discount_type_from'=> $product['products_discount_type_from'],
-					       'products_prid' => '');
+		$sql_data_array = array(
+					'orders_id'=> $insert_id,
+					'products_id'=> $product['id'],
+					'products_model'=> $product['model'],
+					'products_name'=> $product['name'],
+					'products_price'=> $product['price'],
+					'final_price'=> $product['final_price'],
+					'products_tax'=> $product['tax'],
+					'products_quantity'=> $product['qty'],
+					'onetime_charges'=> $product['onetime_charges'],
+					'products_priced_by_attribute'=> $product['products_priced_by_attribute'],
+					'product_is_free'=> $product['product_is_free'],
+					'products_discount_type'=> $product['products_discount_type'],
+					'products_discount_type_from'=> $product['products_discount_type_from'],
+					'products_prid' => '');
                 //echo "<pre>".print_r($sql_data_array, 1)."</pre>";exit();
-	          	zen_db_perform(TABLE_ORDERS_PRODUCTS, $sql_data_array);
+		zen_db_perform(TABLE_ORDERS_PRODUCTS, $sql_data_array);
            
-		         $db->Execute("update " . TABLE_PRODUCTS . "
+		$db->Execute("update " . TABLE_PRODUCTS . "
                                 set products_quantity = products_quantity - '". $product['qty'] ."'
                                 where products_id = '" . $product['id']. "'");
         }
@@ -309,6 +315,12 @@ class molpay {
 
         $db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) values
          ('MOLPay verify key', 'MODULE_PAYMENT_MOLPAY_VKEY', '', 'Please refer your MOLPay merchant profile to have this key', '6', '5', now())");
+         
+        $db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) values
+         ('MOLPay secret key', 'MODULE_PAYMENT_MOLPAY_SECRETKEY', '', 'Please refer your MOLPay merchant profile to have this key', '6', '5', now())"); 
+		 
+        $db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) values 
+         ('Live or Sandbox', 'MODULE_PAYMENT_MOLPAY_TYPE', 'live', '<strong>Live: </strong> Used to process Live transactions<br><strong>Sandbox: </strong>For developers and testing', '6', '25', 'zen_cfg_select_option(array(\'live\', \'sandbox\'), ', now())");
 
         $db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) values
          ('MOLPay multiple return url', 'MODULE_PAYMENT_MOLPAY_RETURNURL', '', 'Provide MOLPay Multi Return URL if you wish to have this fetaures. <i>e.g : http://www.yourdomain.com/process.php</i>', '6', '5', now())");
@@ -334,6 +346,8 @@ class molpay {
             'MODULE_PAYMENT_MOLPAY_STATUS'
             ,'MODULE_PAYMENT_MOLPAY_ID'
             ,'MODULE_PAYMENT_MOLPAY_VKEY'
+	        ,'MODULE_PAYMENT_MOLPAY_SECRETKEY'
+	        ,'MODULE_PAYMENT_MOLPAY_TYPE'
             ,'MODULE_PAYMENT_MOLPAY_RETURNURL'
             ,'MODULE_PAYMENT_MOLPAY_SORT_ORDER'
             ,'MODULE_PAYMENT_MOLPAY_ORDER_STATUS_ID'
