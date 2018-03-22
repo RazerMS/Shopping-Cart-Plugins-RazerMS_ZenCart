@@ -45,7 +45,7 @@ Please ensure the file permission is correct. It's recommended to CHMOD to 644
 
 - Now, access your MOLPay merchant account using the loginID and password provided to you.
 
-- Click on the `Merchant Profile` tab above and fill in the Return URL & Callback URL for your shopping cart.
+- Click Transaction > Transaction Settings > Endpoint setting.
 
     `E.g :`
 
@@ -53,7 +53,7 @@ Please ensure the file permission is correct. It's recommended to CHMOD to 644
 
     `Callback URL : http://www.yourdomain.com.my/process_callback.php`
 
-- Click on `[Update]`
+- Click on `[Submit]`
 
 - Now you can try to use MOLPay at the shop front by going thru a complete purchase procedure.
  
