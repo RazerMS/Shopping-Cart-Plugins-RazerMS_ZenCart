@@ -1,29 +1,29 @@
 <?php
 /**
- * MOLPay ZendCart Plugin
+ * Razer Merchant Services ZendCart Plugin
  * 
  * @package Payment Gateway
- * @author MOLPay Technical Team <technical@molpay.com>
+ * @author Razer Merchant Services Technical Team <technical-sa@razer.com>
  * @version 2.0.0
  */
  
-class molpay {
+class razermerchantservices {
     public  $code,
             $title, 
             $description, 
             $enabled;
 
-    function molpay()  {
+    function razermerchantservices ()  {
         global $db, $order;
-        $this->code = 'molpay';
-        $this->title = MODULE_PAYMENT_MOLPAY_TEXT_TITLE;
-        $this->description = MODULE_PAYMENT_MOLPAY_TEXT_DESCRIPTION;
-        $thiglobals->sort_order = MODULE_PAYMENT_MOLPAY_SORT_ORDER;
-        $this->enabled = ((MODULE_PAYMENT_MOLPAY_STATUS == 'True') ? true : false);
-        $this->form_action_url = ((MODULE_PAYMENT_MOLPAY_TYPE == 'live') ? "https://www.onlinepayment.com.my/MOLPay/pay/".MODULE_PAYMENT_MOLPAY_ID."/" : "https://sandbox.molpay.com/MOLPay/pay/".MODULE_PAYMENT_MOLPAY_ID."/");
+        $this->code = 'razermerchantservices';
+        $this->title = MODULE_PAYMENT_RMS_TEXT_TITLE;
+        $this->description = MODULE_PAYMENT_RMS_TEXT_DESCRIPTION;
+        $this->sort_order = MODULE_PAYMENT_RMS_SORT_ORDER;
+        $this->enabled = ((MODULE_PAYMENT_RMS_STATUS == 'True') ? true : false);
+        $this->form_action_url = ((MODULE_PAYMENT_RMS_TYPE == 'live') ? "https://www.onlinepayment.com.my/MOLPay/pay/".MODULE_PAYMENT_RMS_ID."/" : "https://sandbox.merchant.razer.com/MOLPay/pay/".MODULE_PAYMENT_RMS_ID."/");
 
-        if ((int)MODULE_PAYMENT_MOLPAY_ORDER_STATUS_ID > 0) {
-            $this->order_status = MODULE_PAYMENT_MOLPAY_ORDER_STATUS_ID;
+        if ((int)MODULE_PAYMENT_RMS_ORDER_STATUS_ID > 0) {
+            $this->order_status = MODULE_PAYMENT_RMS_ORDER_STATUS_ID;
         }
 
         if (is_object($order))
@@ -31,12 +31,11 @@ class molpay {
 
     }
 
-
     function update_status() {
         global $order, $db;
-        if ( ($this->enabled == true) && ((int)MODULE_PAYMENT_MOLPAY_ZONE > 0) ) {
+        if ( ($this->enabled == true) && ((int)MODULE_PAYMENT_RMS_ZONE > 0) ) {
             $check_flag = false;
-            $check = $db->Execute("select zone_id from " . TABLE_ZONES_TO_GEO_ZONES . " where geo_zone_id = '" . MODULE_PAYMENT_MOLPAY_ZONE . "' and zone_country_id = '" . $order->billing['country']['id'] . "' order by zone_id");
+            $check = $db->Execute("select zone_id from " . TABLE_ZONES_TO_GEO_ZONES . " where geo_zone_id = '" . MODULE_PAYMENT_RMS_ZONE . "' and zone_country_id = '" . $order->billing['country']['id'] . "' order by zone_id");
             while (!$check->EOF) {
                 if ($check->fields['zone_id'] < 1) {
                     $check_flag = true;
@@ -73,8 +72,8 @@ class molpay {
         global $order;
         
          return array('id' => $this->code,
-                 'module' => MODULE_PAYMENT_MOLPAY_TEXT_CATALOG_LOGO,
-                 'icon' => MODULE_PAYMENT_MOLPAY_TEXT_CATALOG_LOGO
+                 'module' => MODULE_PAYMENT_RMS_TEXT_CATALOG_LOGO,
+                 'icon' => MODULE_PAYMENT_RMS_TEXT_CATALOG_LOGO
                  );
 
     }
@@ -88,10 +87,7 @@ class molpay {
     {
 
        global $_POST, $languages_id, $shipping_cost, $total_cost, $shipping_selected, $shipping_method, $currencies, $currency, $customer_id , $db, $order;
-        // require('includes/application_top.php');
-        // include(DIR_WS_CLASSES . 'order.php');
 
-        // Create the order based on customer id
         $customer_id = $_SESSION['customer_id'];
         $customer_query = "SELECT c.`customers_firstname` , c.`customers_lastname` , c.`customers_email_address` , c.`customers_telephone`, ab.`entry_company` ,  ab.`entry_street_address` ,  ab.`entry_suburb` , ab.`entry_postcode` , ab.`entry_city` , ab.`entry_state` , ab.`entry_country_id` , 
               ab.`entry_zone_id` FROM ".TABLE_CUSTOMERS." c JOIN ".TABLE_ADDRESS_BOOK." ab ON ( c.`customers_default_address_id` = ab.`address_book_id` ) 
@@ -101,9 +97,6 @@ class molpay {
         $customer_info->fields['country_name'] = zen_get_country_name($customer_info->fields['entry_country_id']);
         
         $curr_obj = $order->info;
-       // echo "<pre>".print_r($curr_obj,1)."</pre>"; exit();
-        //$currency = $curr_obj[currency];
-//        echo "<pre>".print_r($currencies,1)."</pre><br>"; exit();
 
         $OrderAmt = number_format($order->info['total'] * $order->info['currency_value'], $currencies->get_decimal_places($order->info['currency']), '.', '') ; 
 
@@ -139,8 +132,8 @@ class molpay {
                'billing_address_format_id' => $customer_info->fields['format_id'],
                'shipping_method' => $order->info['shipping_method'],
                'shipping_module_code' => $order->info['shipping_module_code'],
-               'payment_method' => 'MOLPay Online Payment Gateway(Visa, MasterCard, Maybank2u, MEPS, FPX, etc)',
-               'payment_module_code' => 'molpay',
+               'payment_method' => 'RMS Online Payment Gateway(Visa, MasterCard, Maybank2u, MEPS, FPX, etc)',
+               'payment_module_code' => 'rms',
                'coupon_code' => $order->info['coupon_code'],
                'date_purchased' => 'now()', 
                'orders_status' => DEFAULT_ORDERS_STATUS_ID,
@@ -151,9 +144,7 @@ class molpay {
                'paypal_ipn_id' => '0',
                'ip_address' => $_SERVER['REMOTE_ADDR']. " - " . $_SERVER['REMOTE_ADDR']
                );
-              //   echo "<pre>".print_r($order,1)."</pre><br>".$order->info['sub_total']."<br>";
-              //  echo "<pre>".print_r($order_query,1)."</pre>"; exit();
-        //print_r($order_query);
+
         zen_db_perform(TABLE_ORDERS, $order_query);
         $insert_id = $db->insert_ID();
         
@@ -162,8 +153,7 @@ class molpay {
                           'orders_status_id' => DEFAULT_ORDERS_STATUS_ID,
                           'date_added' => 'now()'
                          );
-        //echo '<br/>';
-        //print_r($order_status);
+
         zen_db_perform(TABLE_ORDERS_STATUS_HISTORY, $order_status);
 
         //Insert Order Total
@@ -173,8 +163,7 @@ class molpay {
                             'value' => $order->info['subtotal'], 
                             'class' => "ot_subtotal", 
                             'sort_order' => "1");
-        //echo '<br/>';
-        //print_r($order_total);
+
         zen_db_perform(TABLE_ORDERS_TOTAL, $order_total);
 
         $order_total = array('orders_id' => $insert_id,
@@ -183,8 +172,7 @@ class molpay {
                             'value' => $order->info['shipping_cost'], 
                             'class' => "ot_shipping", 
                             'sort_order' => "2");
-        //echo '<br/>';
-        //print_r($order_total);
+
         zen_db_perform(TABLE_ORDERS_TOTAL, $order_total);
 
         $order_total = array('orders_id' => $insert_id,
@@ -193,11 +181,8 @@ class molpay {
                             'value' => $OrderAmt, 
                             'class' => "ot_total", 
                             'sort_order' => "3");
-        //echo '<br/>';
-        //print_r($order_total);
-        zen_db_perform(TABLE_ORDERS_TOTAL, $order_total);
 
-        // zen_redirect(zen_href_link("edit_orders.php", zen_get_all_get_params(array('action')) . 'action=edit&oID='.$insert_id));
+        zen_db_perform(TABLE_ORDERS_TOTAL, $order_total);
 
         $customers_query = $db -> Execute("select customers_id, CONCAT( customers_firstname, ' ', customers_lastname ) AS customers_fullname, customers_email_address from " . TABLE_CUSTOMERS . " ORDER BY customers_firstname");
         while(!$customers_query -> EOF) 
@@ -207,12 +192,11 @@ class molpay {
             $customers_query->MoveNext();
         }
 	
-	//echo "<pre>".print_r($order->products, 1)."</pre>";exit();
         foreach($order->products as $product)
         {
 		$sql_data_array = array(
 					'orders_id'=> $insert_id,
-					'products_id'=> $product['id'],
+					'products_id'=> strtok($product['id'], ':'),
 					'products_model'=> $product['model'],
 					'products_name'=> $product['name'],
 					'products_price'=> $product['price'],
@@ -224,13 +208,21 @@ class molpay {
 					'product_is_free'=> $product['product_is_free'],
 					'products_discount_type'=> $product['products_discount_type'],
 					'products_discount_type_from'=> $product['products_discount_type_from'],
-					'products_prid' => '');
-                //echo "<pre>".print_r($sql_data_array, 1)."</pre>";exit();
+					'products_prid' => $product['id'],
+                    'products_weight' => $product['products_weight'],
+                    'products_virtual' => $product['products_virtual'],
+                    'product_is_always_free_shipping' => $product['product_is_always_free_shipping'],
+                    'products_quantity_order_min' => $product['products_quantity_order_min'],
+                    'products_quantity_order_units' => $product['products_quantity_order_units'],
+                    'products_quantity_order_max' => $product['products_quantity_order_max'],
+                    'products_quantity_mixed' =>  $product['products_quantity_mixed'],
+                    'products_mixed_discount_quantity' => $product['products_mixed_discount_quantity']);
+
 		zen_db_perform(TABLE_ORDERS_PRODUCTS, $sql_data_array);
            
 		$db->Execute("update " . TABLE_PRODUCTS . "
                                 set products_quantity = products_quantity - '". $product['qty'] ."'
-                                where products_id = '" . $product['id']. "'");
+                                where products_id = '" . strtok($product['id'], ':'). "'");
         }
        
         return false;
@@ -255,8 +247,8 @@ class molpay {
         $oid_sql = "select Max(orders_id) as oid from ".TABLE_ORDERS." ";
         $oid = $db->Execute($oid_sql);
         $oid = $oid->fields['oid'];
-        $returnurl = MODULE_PAYMENT_MOLPAY_RETURNURL;
-        $vcode = md5($OrderAmt.MODULE_PAYMENT_MOLPAY_ID.$oid.MODULE_PAYMENT_MOLPAY_VKEY);
+        $returnurl = MODULE_PAYMENT_RMS_RETURNURL;
+        $vcode = md5($OrderAmt.MODULE_PAYMENT_RMS_ID.$oid.MODULE_PAYMENT_RMS_VKEY);
 
         $process_button_string = 
         zen_draw_hidden_field('currency', strtoupper($currency)) . 
@@ -290,16 +282,14 @@ class molpay {
     function get_error() {
         global $_GET;
 
-        $error = array('title'=>'MOLPay Error',
+        $error = array('title'=>'RMS Error',
                        'error'=>'Error Detail');
-
-        //return false;
     }
 
     function check() {
         global $db;
         if (!isset($this->_check)) {
-            $check_query = $db->Execute("select configuration_value from " . TABLE_CONFIGURATION . " where configuration_key = 'MODULE_PAYMENT_MOLPAY_STATUS'");
+            $check_query = $db->Execute("select configuration_value from " . TABLE_CONFIGURATION . " where configuration_key = 'MODULE_PAYMENT_RMS_STATUS'");
             $this->_check = $check_query->RecordCount();
         }
         return $this->_check;
@@ -308,28 +298,28 @@ class molpay {
     function install() {
         global $db;
         $db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) values 
-        ('Enable MOLPay Module', 'MODULE_PAYMENT_MOLPAY_STATUS', 'True', 'Do you want to accept MOLPay payments?', '6', '1', 'zen_cfg_select_option(array(\'True\', \'False\'), ', now())");
+        ('Enable RMS Module', 'MODULE_PAYMENT_RMS_STATUS', 'True', 'Do you want to accept RMS payments?', '6', '1', 'zen_cfg_select_option(array(\'True\', \'False\'), ', now())");
 
         $db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) values
-         ('MOLPay Merchant ID', 'MODULE_PAYMENT_MOLPAY_ID', '', 'Your MOLPay Merchant ID', '6', '2', now())");
+         ('RMS Merchant ID', 'MODULE_PAYMENT_RMS_ID', '', 'Your RMS Merchant ID', '6', '2', now())");
 
         $db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) values
-         ('MOLPay verify key', 'MODULE_PAYMENT_MOLPAY_VKEY', '', 'Please refer your MOLPay merchant profile to have this key', '6', '5', now())");
+         ('RMS secret key', 'MODULE_PAYMENT_RMS_SECRETKEY', '', 'Please refer your RMS merchant profile to have this key', '6', '5', now())");
          
         $db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) values
-         ('MOLPay secret key', 'MODULE_PAYMENT_MOLPAY_SECRETKEY', '', 'Please refer your MOLPay merchant profile to have this key', '6', '5', now())"); 
+         ('RMS verify key', 'MODULE_PAYMENT_RMS_VKEY', '', 'Please refer your RMS merchant profile to have this key', '6', '5', now())"); 
 		 
         $db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, date_added) values 
-         ('Live or Sandbox', 'MODULE_PAYMENT_MOLPAY_TYPE', 'live', '<strong>Live: </strong> Used to process Live transactions<br><strong>Sandbox: </strong>For developers and testing', '6', '25', 'zen_cfg_select_option(array(\'live\', \'sandbox\'), ', now())");
+         ('Live or Sandbox', 'MODULE_PAYMENT_RMS_TYPE', 'live', '<strong>Live: </strong> Used to process Live transactions<br><strong>Sandbox: </strong>For developers and testing', '6', '25', 'zen_cfg_select_option(array(\'live\', \'sandbox\'), ', now())");
 
         $db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) values
-         ('MOLPay multiple return url', 'MODULE_PAYMENT_MOLPAY_RETURNURL', '', 'Provide MOLPay Multi Return URL if you wish to have this fetaures. <i>e.g : http://www.yourdomain.com/process.php</i>', '6', '5', now())");
+         ('RMS multiple return url', 'MODULE_PAYMENT_RMS_RETURNURL', '', 'Provide RMS Multi Return URL if you wish to have this fetaures. <i>e.g : http://www.yourdomain.com/process.php</i>', '6', '5', now())");
 
         $db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) values
-         ('Sort order of display.', 'MODULE_PAYMENT_MOLPAY_SORT_ORDER', '0', 'Sort order of display. Lowest is displayed first.', '6', '0', now())");
+         ('Sort order of display.', 'MODULE_PAYMENT_RMS_SORT_ORDER', '0', 'Sort order of display. Lowest is displayed first.', '6', '0', now())");
 
         $db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, set_function, use_function, date_added) values
-         ('Set Order Status', 'MODULE_PAYMENT_MOLPAY_ORDER_STATUS_ID', '0', 'Set the status of orders made with this payment module to this value', '6', '0', 'zen_cfg_pull_down_order_statuses(', 'zen_get_order_status_name', now())");
+         ('Set Order Status', 'MODULE_PAYMENT_RMS_ORDER_STATUS_ID', '0', 'Set the status of orders made with this payment module to this value', '6', '0', 'zen_cfg_pull_down_order_statuses(', 'zen_get_order_status_name', now())");
 
     }
 
@@ -343,14 +333,14 @@ class molpay {
 ////////////////////////////////////////////////////
     function keys() {
         return array(
-            'MODULE_PAYMENT_MOLPAY_STATUS'
-            ,'MODULE_PAYMENT_MOLPAY_ID'
-            ,'MODULE_PAYMENT_MOLPAY_VKEY'
-	        ,'MODULE_PAYMENT_MOLPAY_SECRETKEY'
-	        ,'MODULE_PAYMENT_MOLPAY_TYPE'
-            ,'MODULE_PAYMENT_MOLPAY_RETURNURL'
-            ,'MODULE_PAYMENT_MOLPAY_SORT_ORDER'
-            ,'MODULE_PAYMENT_MOLPAY_ORDER_STATUS_ID'
+            'MODULE_PAYMENT_RMS_STATUS'
+            ,'MODULE_PAYMENT_RMS_ID'
+            ,'MODULE_PAYMENT_RMS_VKEY'
+	        ,'MODULE_PAYMENT_RMS_SECRETKEY'
+	        ,'MODULE_PAYMENT_RMS_TYPE'
+            ,'MODULE_PAYMENT_RMS_RETURNURL'
+            ,'MODULE_PAYMENT_RMS_SORT_ORDER'
+            ,'MODULE_PAYMENT_RMS_ORDER_STATUS_ID'
         );
     }
 }
