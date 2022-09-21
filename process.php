@@ -1,10 +1,10 @@
 <?php
 
 /**
- * MOLPay ZendCart Plugin
+ * Razer Merchant Services (RMS) ZendCart Plugin
  * 
  * @package Payment Gateway
- * @author MOLPay Technical Team <technical@molpay.com>
+ * @author Razer Merchant Services Technical Team <technical-sa@razer.com>
  * @version 2.0.0
  */
 
@@ -23,7 +23,7 @@ $currency = $info['currency'];
 $paydate  = $info['paydate'];
 $channel  = $info['channel'];
 $skey     = $info['skey'];
-$password = MODULE_PAYMENT_MOLPAY_VKEY;
+$password = MODULE_PAYMENT_RMS_VKEY;
 
 $excluded = array ("domain", "skey", "nbcb", "treq");
 $comment = "Payment Info\n\r";
@@ -64,7 +64,7 @@ while ( list($k,$v) = each($_POST) )
 	$postData[]= $k."=".$v;
 }
 $postdata 	=implode("&",$postData);
-$url 		=((MODULE_PAYMENT_MOLPAY_TYPE == 'live') ? "https://www.onlinepayment.com.my/MOLPay/API/chkstat/returnipn.php" : "https://sandbox.molpay.com/MOLPay/API/chkstat/returnipn.php");
+$url 		=((MODULE_PAYMENT_RMS_TYPE == 'live') ? "https://www.onlinepayment.com.my/MOLPay/API/chkstat/returnipn.php" : "https://sandbox.merchant.razer.com/MOLPay/API/chkstat/returnipn.php");
 $ch 		=curl_init();
 curl_setopt($ch, CURLOPT_POST , 1 );
 curl_setopt($ch, CURLOPT_POSTFIELDS , $postdata );
@@ -87,18 +87,16 @@ if($skey != $key1)
 
 if ($status=="00") 
 {
-	$db->Execute("update " . TABLE_ORDERS . "
-			      set orders_status = 2
-	                      where orders_id = '" . (int)$orderid . "'");
+	$db->Execute("update " . TABLE_ORDERS . " set orders_status = 2 where orders_id = '" . (int)$orderid . "'");
 	                        
-        $sql_data_array = array('orders_id' => (int)$orderid,
-                            		'orders_status_id' => 2,
-		                        'date_added' => 'now()',
-                            		'customer_notified' => false,
-                            		'comments'=>$comment
-        );
+	$sql_data_array = array('orders_id' => (int)$orderid,
+							'orders_status_id' => 2,
+							'date_added' => 'now()',
+							'customer_notified' => 0,
+							'comments'=>$comment
+	);
 
-        zen_db_perform(TABLE_ORDERS_STATUS_HISTORY, $sql_data_array);
+    zen_db_perform(TABLE_ORDERS_STATUS_HISTORY, $sql_data_array);
 
 	$db->Execute("delete from ". TABLE_CUSTOMERS_BASKET);
 	unset($_SESSION['cart']);
@@ -107,7 +105,7 @@ if ($status=="00")
 }
 elseif($status=="22")
 {
-        $db->Execute("update " . TABLE_ORDERS_STATUS_HISTORY . " set comments = '". $comment ."' where orders_id = '" . (int)$orderid . "'");
+    $db->Execute("update " . TABLE_ORDERS_STATUS_HISTORY . " set comments = '". $comment ."' where orders_id = '" . (int)$orderid . "'");
 								
 	$db->Execute("delete from ". TABLE_CUSTOMERS_BASKET);
 	unset($_SESSION['cart']);
@@ -118,7 +116,7 @@ elseif($status=="22")
 }
 elseif($status=="11")
 {
-        $db->Execute("update " . TABLE_ORDERS_STATUS_HISTORY . " set comments = '". $comment ."' where orders_id = '" . (int)$orderid . "'");
+    $db->Execute("update " . TABLE_ORDERS_STATUS_HISTORY . " set comments = '". $comment ."' where orders_id = '" . (int)$orderid . "'");
                                       
 	$nb_error = "Payment failed. Please make payment again. ";
 	$messageStack->add_session('checkout_payment', $nb_error, 'error');
