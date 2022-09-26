@@ -1,12 +1,3 @@
-WARNING!
-========
-
-<h3>Please be informed that this library has been obsoleted and marked as End-of-Life product. 
-
-
-------------------------------------------------------
-
-
 Razer Merchant Services (RMS) ZenCart Plugin
 ===============
 
